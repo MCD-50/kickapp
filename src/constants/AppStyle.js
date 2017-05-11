@@ -104,8 +104,8 @@ export const style = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	align_end_justify_end: {
-		alignItems: 'center',
-		justifyContent: 'center',
+		alignItems: 'flex-end',
+		justifyContent: 'flex-end',
 	},
 	avatar_base: {
 		alignItems: 'center',

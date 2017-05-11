@@ -1,6 +1,7 @@
 //import from system
 import React, { Component, PropTypes } from 'react';
-import { View, Text, BackAndroid, ListView, } from 'react-native';
+import { View, Text, ListView } from 'react-native';
+var format = require('string-format')
 
 //import from app
 import { Toolbar, Avatar, Progress, ListItem, Badge, Toast } from 'react-native-material-component';
@@ -10,9 +11,11 @@ import { APP_INFO, GET_ISSUES, GET_OPPORTUNITY } from '../../constants/AppConsta
 import { style } from '../../constants/AppStyle.js';
 import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
 import { getData, setData } from '../../helpers/AsyncStore.js';
-import DatabaseHelper from '../../helpers/DatabaseHelper.js';
+import { getTextColor, getTitle, getAvatarText, getSubtitle } from '../../helpers/CollectionHelper.js';
 import AlertHelper from '../../helpers/AlertHelper.js';
 import SocketHelper from '../../helpers/SocketHelper.js';
+import Fluxify from 'fluxify';
+
 
 //socket-io fix
 window.navigator.userAgent = "react-native"
@@ -25,89 +28,93 @@ const propTypes = {
 	currentChat: PropTypes.object.isRequired,
 };
 
-const menuItems = [
-	'Issues', 'Opportunity', 'Settings'
-]
-
+const menuItems = ['Opportunity', 'Settings'];
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1.id !== r2.id });
-class ChatListPage extends Component {
 
+class ListPage extends Component {
 	constructor(params) {
 		super(params);
 		this.socket = {};
 		this.state = {
 			searchText: '',
 			isLoading: true,
+			chatList: [],
 			dataSource: ds.cloneWithRows([]),
 			title: 'Updating...',
 			appInfo: null,
+			roomJoined: false,
+
 		};
 
 		this.onSocketConnectCallback = this.onSocketConnectCallback.bind(this);
 		this.onRoomJoinedCallback = this.onRoomJoinedCallback.bind(this);
-		this.getIssues = this.getIssues.bind(this);
+		this.loadData = this.loadData.bind(this);
 		this.onReceive = this.onReceive.bind(this);
 		this.setStateData = this.setStateData.bind(this);
 
-		this.getBadge = this.getBadge.bind(this);
 		this.callback = this.callback.bind(this);
 		this.onRightElementPress = this.onRightElementPress.bind(this);
-		this.renderListItem = this.renderListItem.bind(this);
 		this.renderElement = this.renderElement.bind(this);
+		this.renderListItem = this.renderListItem.bind(this);
 	}
 
 	componentWillMount() {
 		getData(APP_INFO)
 			.then((res) => {
-				this.setState({ appInfo: res });
+				const obj = Object.assign({}, JSON.parse(res));
+				this.setState({ appInfo: obj });
 			});
 	}
 
 	componentDidMount() {
-		this.socket = SocketHelper(this.onMessageReceive,
+		this.socket = SocketHelper(this.onReceive,
 			this.onSocketConnectCallback,
 			this.onRoomJoinedCallback);
 	}
 
 	onSocketConnectCallback() {
+		this.setState({ isLoading: false });
 		getData(APP_INFO)
 			.then((res) => {
+				res = JSON.parse(res);
 				this.socket.joinRoom(res.email.toLowerCase().trim())
-			})
+			});
 	}
 
 	onRoomJoinedCallback() {
-		// get all issues
-		this.getIssues();
-	}
-
-	getIssues() {
-		const url = GET_ISSUES.format(this.state.appInfo.domain);
-		const data = { email: this.state.appInfo.email }
-		resolveRequest(url, data)
-			.then((res) => {
-				console.log(res);
-			}).catch((rej) => {
-				this.setState({ isLoading: false, title: "Kick" });
-			})
+		this.setStateData({ roomJoined: true });
+		this.loadData();
 	}
 
 	onReceive(message) {
-		// list_update logic if doctype if issue or opportunity then fetch again.
+		//notify on new issue or opportunity
 		console.log(message);
 	}
 
 	setStateData(__list) {
-		this.setState({ chatList: __list, dataSource: ds.cloneWithRows(__list), isLoading: false });
+		this.setState({
+			chatList: __list,
+			dataSource: ds.cloneWithRows(__list),
+			isLoading: false
+		});
 	}
 
-
-	getBadge(count = null) {
-		if (count && count > 0) {
-			return <Badge text={count.toString()} />
-		}
-		return null;
+	loadData() {
+		const url = format(GET_ISSUES, this.state.appInfo.domain);
+		const data = { "email": this.state.appInfo.email }
+		resolveRequest(url, data)
+			.then((res) => {
+				if (res && res.message && res.message.length > 0) {
+					this.setState({ title: "Kick" });
+					this.setStateData(res.message);
+				} else {
+					this.setState({ isLoading: false, title: "Kick" });
+				}
+			}).catch((rej) => {
+				console.log(rej);
+				this.setState({ isLoading: false, title: "Kick" });
+			})
 	}
 
 	callback(from_page, chat = null) {
@@ -115,41 +122,42 @@ class ChatListPage extends Component {
 	}
 
 	renderListItem(item) {
-		// const title = getTitle(chat.title);
-		// return (
-		// 	<ListItem
-		// 		divider
-		// 		leftElement={<Avatar bgcolor={getTextColor(chat.title)} text={title} />}
-		// 		centerElement={{
-		// 			primaryElement: {
-		// 				primaryText: chat.title,
-		// 				icon: this.getBadgeAndIcon(null, chat.info.chat_type)
-		// 			},
-		// 			secondaryText: chat.sub_title,
-		// 		}}
-
-		// 		rightElement={{
-		// 			upperElement: this.getLastMessageTime(chat.info.last_message_time),
-		// 			lowerElement: this.getBadgeAndIcon(count = chat.info.new_message_count),
-		// 		}}
-
-		// 		onPress={() => {
-		// 			const page = Page.CHAT_PAGE;
-		// 			this.props.navigator.push({
-		// 				id: page.id, name: page.name,
-		// 				data: {
-		// 					chat: chat,
-		// 					callback: this.callback,
-		// 					appInfo: this.state.appInfo
-		// 				}
-		// 			})
-		// 		}} />
-		// );
+		if (typeof item == 'object') {
+			const title = getTitle(item, "subject", "raised_by");
+			return (
+				<ListItem
+					divider
+					leftElement={<Avatar bgcolor={getTextColor(title)} text={getAvatarText(item, "subject", "raised_by")} />}
+					centerElement={{
+						primaryElement: {
+							primaryText: title,
+						},
+						secondaryText: getSubtitle(item, "description"),
+					}}
+					onPress={() => {
+						const page = Page.CHAT_PAGE;
+						this.props.navigator.push({
+							id: page.id, name: page.name,
+							data: {
+								item: item,
+								callback: this.callback,
+								appInfo: this.state.appInfo
+							}
+						})
+					}} />
+			);
+		}
+		return null;
 	}
 
 	onRightElementPress(action) {
 		const index = action.index;
-		if (index == 2) {
+		if (index == 0) {
+			this.setState({ isOpportunity: false });
+		} else if (index == 1) {
+			this.setState({ isOpportunity: true });
+		}
+		else if (index == 2) {
 			this.props.navigator.push({
 				id: Page.SETTINGS_PAGE.id, name: Page.SETTINGS_PAGE.name,
 				data: {
@@ -192,5 +200,5 @@ class ChatListPage extends Component {
 	}
 }
 
-ChatListPage.propTypes = propTypes;
-export default ChatListPage;
+ListPage.propTypes = propTypes;
+export default ListPage;

@@ -36,7 +36,7 @@ class SocketClient {
 		this.socket.on('open', () => this.onOpenInternal());
 		this.socket.on('error', (e) => this.onErrorInternal(e));
 		this.socket.on('close', (e) => this.onCloseInternal(e));
-		this.socket.on('list_update', (msg) => this.onListUpdate(msg));
+		this.socket.on('kick_list_update', (msg) => this.onListUpdate(msg));
 		this.socket.on('notification_from_server', (noti) => this.onNotificationInternal(noti));
 		this.socket.on('joined_room', (msg) => this.onJoinedRoom(msg));
 		this.socket.on('left_room', (msg) => this.onLeftRoom(msg));

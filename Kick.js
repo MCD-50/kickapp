@@ -17,7 +17,6 @@ import LoginPage from './src/ui/views/LoginPage.js';
 import ListPage from './src/ui/views/ListPage.js';
 import ChatPage from './src/ui/views/ChatPage.js';
 import SettingsPage from './src/ui/views/SettingsPage.js';
-import InfoPage from './src/ui/views/InfoPage.js';
 
 
 class Kick extends Component {
@@ -26,7 +25,7 @@ class Kick extends Component {
 		this.state = {
 			chatList: [],
 			communications: [],
-			currentChat: null
+			currentChat: {}
 		}
 
 		this.onChatListChanged = this.onChatListChanged.bind(this);
@@ -48,7 +47,7 @@ class Kick extends Component {
 		this.setState({ chatList: list.splice() });
 	}
 
-	onCurrentChatChanged(list) {
+	onCommunicationsChanged(list) {
 		this.setState({ communications: list.splice() });
 	}
 

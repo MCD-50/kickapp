@@ -20,7 +20,7 @@ const defaultProps = {
 	containerStyle: {},
 };
 
-class SendUI extends Component {
+class Send extends Component {
 
 	render() {
 		if (this.props.text.trim().length > 0) {
@@ -50,7 +50,7 @@ class SendUI extends Component {
 	}
 }
 
-SendUI.propTypes = propTypes;
-SendUI.defaultProps = defaultProps;
+Send.propTypes = propTypes;
+Send.defaultProps = defaultProps;
 
-export default SendUI;
+export default Send;

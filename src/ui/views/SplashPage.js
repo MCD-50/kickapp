@@ -32,7 +32,7 @@ class SplashPage extends Component {
 		}
 
 		this.navigate = this.navigate.bind(this);
-		this.resolveServerUrl = this.resolveServerUrl.bind(this);
+		//this.resolveServerUrl = this.resolveServerUrl.bind(this);
 		this.renderFooter = this.renderFooter.bind(this);
 	}
 
@@ -54,9 +54,9 @@ class SplashPage extends Component {
 	}
 
 	navigate(r) {
-		if (r == null) {
+		if (r == null || r == "false") {
 			const page = Page.LOGIN_PAGE;
-			setTimeout(() => this.props.navigator.replace({ id: page.id, name: page.name }), 3000);
+			this.props.navigator.replace({ id: page.id, name: page.name })
 		} else {
 			this.setState({progress:true});
 			getData(APP_INFO)
@@ -66,37 +66,43 @@ class SplashPage extends Component {
 					login(res)
 					.then((x)=>{
 						//login successfull now fetch the server url
-						this.resolveServerUrl(res);
+						//this.resolveServerUrl(res);
+						this.setState({progress : false});
+						this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
 					}).catch((rej) => {
 						this.setState({ progress: false, error: true });
 					});
 				} else {
 					const page = Page.LOGIN_PAGE;
-					setTimeout(() => this.props.navigator.replace({ id: page.id, name: page.name }), 3000);
+					this.props.navigator.replace({ id: page.id, name: page.name })
 				}
 			});
 		}
 	}
 
-	resolveServerUrl(full_url) {
-		let index = full_url.lastIndexOf('api');
-		let ping_url = full_url.substring(0, index);
-
-		fetch(ping_url + '/api/method/frappe.utils.kickapp.bridge.get_dev_port')
-		.then((res) => res.json(), (rej)=> AlertHelper.showAlert("Network request failed.",'Something went wrong. Please try in a little bit.'))
-		.then((json) => {
-			getData(APP_INFO)
-			.then((dom)=>{
-				dom = JSON.parse(dom).domain;
-				const domain = dom.split(':');
-				let url = 'http://' + domain[0];
-				if (json[0] == 1) {
-					url = url + ':' + json[1];
-				}
-				setData(SERVER_URL, url);
-			})
-		}, (rej) => AlertHelper.showAlert("Unable to convert to JSON.",'Something went wrong. Please try in a little bit.'));
-	}
+	// resolveServerUrl(full_url) {
+	// 	const index = full_url.lastIndexOf('api');
+	// 	const ping_url = full_url.substring(0, index) + 'api/method/frappe.utils.kick.get_dev_port';
+	// 	fetch(ping_url)
+	// 	.then((res) => res.json(), (rej)=> AlertHelper.showAlert("Network request failed.",'Something went wrong. Please try in a little bit.'))
+	// 	.then((json) => {
+	// 		getData(APP_INFO)
+	// 		.then((dom)=>{
+	// 			dom = JSON.parse(dom).domain;
+	// 			const domain = dom.split(':');
+	// 			let url = 'http://' + domain[0];
+	// 			if (json.message[0] == 1) {
+	// 				url = url + ':' + json.message[1];
+	// 			}
+	// 			setData(SERVER_URL, url);
+	// 			this.setState({progress : false});
+	// 			this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
+	// 		})
+	// 	}, (rej) => {
+	// 		this.setState({progress : false});
+	// 		AlertHelper.showAlert("Unable to convert to JSON.",'Something went wrong. Please try in a little bit.')
+	// 	});
+	// }
 
 	renderFooter() {
 		if (this.state.progress) {
@@ -133,5 +139,4 @@ class SplashPage extends Component {
 }
 
 SplashPage.propTypes = propTypes;
-
 export default SplashPage;

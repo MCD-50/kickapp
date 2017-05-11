@@ -6,7 +6,7 @@ import { View, Text, Image, TextInput, TouchableOpacity, Linking, ScrollView, St
 import { Progress, Toast } from 'react-native-material-component';
 import { login } from '../../helpers/InternetHelper.js';
 import { setData, getData } from '../../helpers/AsyncStore.js';
-import { SERVER_URL, APP_INFO} from '../../constants/AppConstant.js';
+import { SERVER_URL, APP_INFO, IS_LOGGED} from '../../constants/AppConstant.js';
 import { style } from '../../constants/AppStyle.js';
 import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
 import { Page } from '../../enums/Page.js';
@@ -64,6 +64,7 @@ class LoginPage extends Component {
 		if (this.isNotEmpty()) {
 			 this.saveAndLogin();
 		} else {
+			this.setState({ progress: false });
 			AlertHelper.showAlert("Something went wrong.", "Please fill in all the details");
 		}
 	}
@@ -84,10 +85,10 @@ class LoginPage extends Component {
 		login(url)
 		.then((res)=>{
 			//login successfull now fetch the server url
-			const data = {domain:domain, email:email, user_name:res.full_name, full_url:url}
+			const data = { domain: domain, email: email, user_name: res.full_name, full_url: url }
 			setData(APP_INFO, data)
-			this.resolveServerUrl(res);
-		}).catch((rej) => this.setState({ progress: false}));
+			this.resolveServerUrl(url);
+		}, (rej)=> this.setState({ progress: false}));
 	}
 
 	isNotEmpty() {
@@ -102,9 +103,8 @@ class LoginPage extends Component {
 
 	resolveServerUrl(full_url) {
 		let index = full_url.lastIndexOf('api');
-		let ping_url = full_url.substring(0, index);
-
-		fetch(ping_url + '/api/method/frappe.utils.kickapp.bridge.get_dev_port')
+		const ping_url = full_url.substring(0, index) + 'api/method/frappe.utils.kick.get_dev_port';
+		fetch(ping_url)
 		.then((res) => res.json(), (rej)=> AlertHelper.showAlert("Network request failed.",'Something went wrong. Please try in a little bit.'))
 		.then((json) => {
 			getData(APP_INFO)
@@ -112,14 +112,18 @@ class LoginPage extends Component {
 				dom = JSON.parse(dom).domain;
 				const domain = dom.split(':');
 				let url = 'http://' + domain[0];
-				if (json[0] == 1) {
-					url = url + ':' + json[1];
+				if (json.message[0] == 1) {
+					url = url + ':' + json.message[1];
 				}
 				setData(SERVER_URL, url);
-				const page = Page.LIST_PAGE;
-				setTimeout(() => this.props.navigator.replace({ id: page.id, name: page.name }), 1000);
+				setData(IS_LOGGED, "true");
+				this.setState({progress : false});
+				this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
 			})
-		}, (rej) => AlertHelper.showAlert("Unable to convert to JSON.",'Something went wrong. Please try in a little bit.'));
+		}, (rej) => {
+			this.setState({progress : false});
+			AlertHelper.showAlert("Unable to convert to JSON.",'Something went wrong. Please try in a little bit.')
+		});
 	}
 
 	cleanDomain(domain) {
@@ -181,16 +185,16 @@ class LoginPage extends Component {
 									onChange={(e) => this.onType(e, 3)}
 									placeholderTextColor={this.props.placeholderTextColor}
 									multiline={false} autoCapitalize='sentences'
-									enablesReturnKeyAutomatically={true} underlineColorAndroid="transparent" />
+									enablesReturnKeyAutomatically={true}  underlineColorAndroid="transparent" secureTextEntry={true}/>
 
-								<TouchableOpacity style={style.align_end_justify_end}
+								<TouchableOpacity style={[style.align_end_justify_end, {marginTop:10, marginBottom:10}]}
 									disabled={this.state.progress}
 									onPress={() => { this.forgotPassword() }}
 									accessibilityTraits="button">
 									<Text style={[style.text_with_flex_1_and_font_size_17_centered, { color: STATUS_BAR_COLOR, fontSize: 14 }]}>Forgot Password?</Text>
 								</TouchableOpacity>
 
-								<View style={{ minWidth: 100, backgroundColor: STATUS_BAR_COLOR }}>
+								<View style={{ minWidth: 100, backgroundColor: STATUS_BAR_COLOR, marginBottom:10 }}>
 									<TouchableOpacity style={[style.align_center_justify_center, { padding: 15, paddingBottom: 8, paddingTop: 8 }]}
 										onPress={() => this.onLoginClicked()}
 										accessibilityTraits="button">
@@ -216,6 +220,6 @@ class LoginPage extends Component {
 	}
 }
 
-LoginPage.propTypes = propTypes;
+LoginPage.PropTypes = propTypes;
 LoginPage.defaultProps = defaultProps;
 export default LoginPage;

@@ -5,59 +5,55 @@ import { NetInfo } from 'react-native';
 import AlertHelper from '../helpers/AlertHelper.js';
 
 export const checkIfNetworkAvailable = () => {
-	return new Promise((resolve, reject) => {
-		NetInfo.isConnected.fetch()
-			.then((res) => resolve(res), (rej) => reject(rej));
-	});
+	return NetInfo.isConnected.fetch();
 }
 
 export const login = (full_url) => {
 	const index = full_url.lastIndexOf('api');
-	const ping_url = full_url.substring(0, index);
+	const ping_url = full_url.substring(0, index) + 'api/method/ping';
 	const method = getMethod()
-	fetchUrl(ping_url + 'api/method/ping', method)
-	.then((json) => {
-		fetchUrl(full_url, method)
-		.then((res) => {
-			if (res.message.includes('Incorrect password')) {
-				AlertHelper.showAlert('Network request failed.', 
-					'Incorrect Password, make sure the entered password is correct and try again in a little bit.');
-				return Promise.reject();
-			} else if (res.message.includes('User disabled or missing')) {
-				AlertHelper.showAlert('Network request failed.', 
-					'Incorrect Username / Email, make sure the entered email is correct and try again in a little bit.');
-				return Promise.reject();
-			} else {
-				return Promise.resolve(res)
-			}
-		})
-		.catch((rej) => {
-			showRejectMessage(rej, 'Something went wrong. Please try in a little bit.');
+
+	return fetchUrl(ping_url)
+		.then((json) => {
+			return fetchUrl(full_url, method)
+				.then((json1) => {
+					if (json1.message.includes('Incorrect password')) {
+						AlertHelper.showAlert('Network request failed.',
+							'Incorrect Password, make sure the entered password is correct and try again in a little bit.');
+						return Promise.reject();
+					} else if (json1.message.includes('User disabled or missing')) {
+						AlertHelper.showAlert('Network request failed.',
+							'Incorrect Username / Email, make sure the entered email is correct and try again in a little bit.');
+						return Promise.reject();
+					} else {
+						return Promise.resolve(json1)
+					}
+				}).catch((rej1) => {
+					showRejectMessage(null, 'Something went wrong. Please try in a little bit.');
+					return Promise.reject();
+				});
+		}).catch((rej) => {
+			showRejectMessage(null, "Please check the domain you enetered.");
 			return Promise.reject();
 		});
-	})
-	.catch((rej) => {
-		showRejectMessage(rej, 'Failed to connect to given domain, make sure the entered domain is correct and try in a little bit.')
-		return Promise.reject();
-	});
 }
 
 export const resolveRequest = (url, data = null) => {
-	return new Promise((resolve, reject)=>{
-		let form = null
-		if(data){
-			data = JSON.stringify(data);
-			form = new FormData();
-			form.append('obj', data);
-		}
-		const method = getMethod(form);
-		fetchUrl(url, method)
-		.then((json) => resolve(json))
-		.catch((rej)=>{
-			showRejectMessage(rej, 'Something went wrong. Please try in a little bit.');
-			reject(rej);
+	let form = null
+	if (data) {
+		form = new FormData();
+		form.append('obj', JSON.stringify(data));
+	}
+
+	const method = getMethod(form);
+
+	return fetchUrl(url, method)
+		.then((res) => {
+			return Promise.resolve(res);
+		})
+		.catch((rej) => {
+			return Promise.reject(rej)
 		});
-	})
 }
 
 const getMethod = (body = null) => {
@@ -66,7 +62,7 @@ const getMethod = (body = null) => {
 			method: "POST",
 			headers: {
 				'Accept': 'application/json',
-				'Content-Type': 'application/json',
+				'Content-Type': 'multipart/form-data',
 			},
 			body: body
 		}
@@ -82,23 +78,26 @@ const getMethod = (body = null) => {
 }
 
 const fetchUrl = (url, method) => {
-	return new Promise((resolve, reject) => {
-		checkIfNetworkAvailable()
-		.then((r)=>{
-			fetch(url, method)
-			.then((res) => res.json(), (rej) => reject(rej))
-			.then((json) => resolve(json), (rej) => reject(rej));
-		})
-		.catch((rej)=> reject({ is_connected:false }));
-	})
+	return checkIfNetworkAvailable()
+		.then((r) => {
+			if (method) {
+				return fetch(url, method).then((res) => res.json(), (rej) => Promise.reject(rej))
+			}
+			return fetch(url).then((res) => {
+				res.json()
+			}, (rej) => Promise.reject(rej))
+		}, (rej) => {
+			showRejectMessage(rej, null);
+			return Promise.reject()
+		});
 }
 
 
-const showRejectMessage = (rej, message)=>{
+const showRejectMessage = (rej, message) => {
 	if (rej) {
 		AlertHelper.showAlert("Network request failed.",
 			"Please check your internet connection and try again.")
-	}else{
+	} else {
 		AlertHelper.showAlert('Network request failed.', message)
 	}
 }

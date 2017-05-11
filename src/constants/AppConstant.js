@@ -31,7 +31,7 @@ export const TOOLBAR_HEIGHT = 55;
 
 //app api constants
 export const GET_ISSUES = "http://{0}/api/method/frappe.utils.kick.get_issues";
-export const GET_OPPORTUNITY = "http://{0}/api/method/frappe.utils.kick.get_issues";
+export const GET_OPPORTUNITY = "http://{0}/api/method/frappe.utils.kick.get_opportunities";
 export const SEND_MESSAGE = "http://{0}/api/method/frappe.utils.kick.send_message";
 
 

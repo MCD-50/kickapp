@@ -14,29 +14,31 @@ import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
 
-  private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
-    @Override
-    public boolean getUseDeveloperSupport() {
-      return BuildConfig.DEBUG;
-    }
+	private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
+		@Override
+		public boolean getUseDeveloperSupport() {
+			return BuildConfig.DEBUG;
+		}
 
-    @Override
-    protected List<ReactPackage> getPackages() {
-      return Arrays.<ReactPackage>asList(
-          new MainReactPackage(),
-            new VectorIconsPackage()
-      );
-    }
-  };
+		@Override
+		protected List<ReactPackage> getPackages() {
+			long size = 50L * 1024L * 1024L; // 50 MB
+			com.facebook.react.modules.storage.ReactDatabaseSupplier.getInstance(getApplicationContext()).setMaximumSize(size);
+			return Arrays.<ReactPackage>asList(
+					new MainReactPackage(),
+					new VectorIconsPackage()
+			);
+		}
+	};
 
-  @Override
-  public ReactNativeHost getReactNativeHost() {
-    return mReactNativeHost;
-  }
+	@Override
+	public ReactNativeHost getReactNativeHost() {
+		return mReactNativeHost;
+	}
 
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    SoLoader.init(this, /* native exopackage */ false);
-  }
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		SoLoader.init(this, /* native exopackage */ false);
+	}
 }
