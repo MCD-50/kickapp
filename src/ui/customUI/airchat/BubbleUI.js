@@ -9,8 +9,6 @@ import {
 
 import MessageTextUI from './MessageTextUI.js';
 import MessageImageUI from './MessageImageUI.js';
-import CommunicationCommentUI from './CommunicationCommentUI.js';
-import CommunicationEmailUI from './CommunicationEmailUI.js';
 import TimeUI from './TimeUI.js';
 
 import { isSameDay, isSameUser, warnDeprecated } from './UtilsUI.js';
@@ -181,7 +179,7 @@ class BubbleUI extends React.Component {
 	}
 
 	renderMessageImage() {
-		if (this.props.currentMessage.image) {
+		if (this.props.currentMessage.attachments && this.props.currentMessage.attachments.length > 0) {
 			const { containerStyle, wrapperStyle, ...messageImageProps } = this.props;
 			if (this.props.renderMessageImage) {
 				return this.props.renderMessageImage(messageImageProps);
@@ -190,30 +188,6 @@ class BubbleUI extends React.Component {
 		}
 		return null;
 	}
-
-	renderCommunicationComment() {
-		if (this.props.currentMessage.text) {
-			const { containerStyle, wrapperStyle, ...messageTextProps } = this.props;
-			if (this.props.renderCommunicationComment) {
-				return this.props.renderCommunicationComment(messageTextProps);
-			}
-			return <CommunicationCommentUI { ...messageTextProps} />;
-		}
-		return null;
-	}
-
-
-	renderCommunicationEmail() {
-		if (this.props.currentMessage.text) {
-			const { containerStyle, wrapperStyle, ...messageTextProps } = this.props;
-			if (this.props.renderCommunicationEmail) {
-				return this.props.renderCommunicationEmail(messageTextProps);
-			}
-			return <CommunicationEmailUI { ...messageTextProps} />;
-		}
-		return null;
-	}
-
 
 	renderTicks() {
 		const { currentMessage } = this.props;
@@ -276,16 +250,6 @@ class BubbleUI extends React.Component {
 		}
 	}
 
-	renderExtra(currentMessage) {
-		if (currentMessage.isPersonalCommunicationChat && currentMessage.communication.is_comment) {
-			return this.renderCommunicationComment();
-		} else if (currentMessage.isPersonalCommunicationChat && !currentMessage.communication.is_comment) {
-			return this.renderCommunicationEmail();
-		} else {
-			return this.renderMessageText()
-		}
-	}
-
 	render() {
 		return (
 			<View style={[styles[this.props.position].container, this.props.containerStyle[this.props.position]]}>
@@ -297,15 +261,13 @@ class BubbleUI extends React.Component {
 						
 						<View>
 							{this.renderCustomView()}
-							{this.renderExtra(this.props.currentMessage)}
-							
+							{this.renderMessageText()}
 							{this.renderMessageImage()}
 							<View style={styles.bottom}>
 								{this.renderTime()}
 								{this.renderTicks()}
 							</View>
 						</View>
-						
 					</TouchableWithoutFeedback>
 				</View>
 			</View>

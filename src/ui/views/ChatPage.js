@@ -1,25 +1,20 @@
 //import from system
 import React, { Component, PropTypes } from 'react';
-import { View, Text, ListView, TouchableOpacity, BackAndroid } from 'react-native';
+import { View, BackAndroid } from 'react-native';
+var format = require('string-format')
 
-// import from app
-// import { Toolbar, Toast } from 'react-native-material-component';
-// import { Page } from '../../enums/Page.js';
-// import { AirChatUI } from '../customUI/airchat/AirChatUI.js';
-// import { resolveRequest } from '../../helpers/InternetHelper.js';
-// import { APP_INFO, SET_USERS_IN_ROOM, GET_USERS_IN_ROOM, SEND_MESSAGE } from '../../constants/AppConstant.js';
-// import { style } from '../../constants/AppStyle.js';
-// import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
-// import { getTitle, getTextColor, getSortedArrayByLastMessageTime, getUniqueArrayByRoom, getTodayDate, pushNewDataAndSortArray, createChatItemFromResponse, convertToAirChatMessageObject, createChatFromResponse, checkIfResponseItemInChatListByRoom, prepareBeforeSending } from '../../helpers/CollectionHelper.js';
-// import { getData, setData } from '../../helpers/AsyncStore.js';
-// import { Type } from '../../enums/Type.js';
-// import { Message } from '../../models/Message.js';
-// import DatabaseHelper from '../../helpers/DatabaseHelper.js';
-// import SocketHelper from '../../helpers/SocketHelper.js';
-// import AlertHelper from '../../helpers/AlertHelper.js';
-// import SendUI from '../components/SendUI.js';
-// import Communications from '../customUI/airchat/Communication.js';
-// import Fluxify from 'fluxify';
+
+//import from app
+import { Toolbar, Progress } from 'react-native-material-component';
+import { Page } from '../../enums/Page.js';
+import { APP_INFO, GET_COMMUNICATION, SEND_MESSAGE } from '../../constants/AppConstant.js';
+import { style } from '../../constants/AppStyle.js';
+import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
+import { loadAsync, convertToAirchatObject } from '../../helpers/CollectionHelper.js';
+import { AirChatUI } from '../customUI/airchat/AirChatUI.js';
+import AlertHelper from '../../helpers/AlertHelper.js';
+import Send from '../components/Send.js';
+import Fluxify from 'fluxify';
 
 
 const propTypes = {
@@ -30,237 +25,156 @@ const propTypes = {
 	currentChat: PropTypes.object.isRequired,
 };
 
+
+const menuItems = ['View Info'];
+
 class ChatPage extends Component {
-	// constructor(params) {
-	// 	super(params);
-	// 	const chat = this.props.route.data.chat;
-	// 	Fluxify.doAction('currentChat', chat);
-	// 	this.state = {
-	// 		chat: chat,
-	// 		isLoading: true,
-	// 		messages: this.props.messages || [],
-	// 		appInfo: this.props.route.data.appInfo,
-	// 		chat_type: chat.info.chat_type,
-	// 		chat_item_type: chat.info.chat_type == Type.GROUP ? Type.GROUP : Type.PERSONAL
-	// 	};
+	constructor(params) {
+		super(params);
+		const item = this.props.route.data.item;
+		Fluxify.doAction('currentChat', item);
 
-	// 	this.addBackEvent = this.addBackEvent.bind(this);
-	// 	this.removeBackEvent = this.removeBackEvent.bind(this);
-	// 	this.popPage = this.popPage.bind(this);
+		this.state = {
+			item: item,
+			progress: true,
+			messages: [],
+			appInfo: this.props.route.data.appInfo,
+		};
 
+		this.addBackEvent = this.addBackEvent.bind(this);
+		this.removeBackEvent = this.removeBackEvent.bind(this);
+		this.popPage = this.popPage.bind(this);
+		this.loadData = this.loadData.bind(this);
+		this.setStateData = this.setStateData.bind(this);
+		this.renderSend = this.renderSend.bind(this);
+		this.onSend = this.onSend.bind(this);
+		this.onRespond = this.onRespond.bind(this);
+		this.callback = this.callback.bind(this);
+		this.onRightElementPress = this.onRightElementPress.bind(this);
+	}
 
-	// 	this.storeChatItemInDatabase = this.storeChatItemInDatabase.bind(this);
-	// 	this.saveMessageOnSend = this.saveMessageOnSend.bind(this);
+	componentWillMount() {
+		this.addBackEvent();
+	}
 
-	// 	this.renderSend = this.renderSend.bind(this);
-	// 	this.onSend = this.onSend.bind(this);
+	componentWillUnmount() {
+		this.removeBackEvent();
+	}
 
-	// 	this.onRightElementPress = this.onRightElementPress.bind(this);
-	// 	this.onRespond = this.onRespond.bind(this);
-	// 	this.callback = this.callback.bind(this);
-	// }
+	addBackEvent() {
+		BackAndroid.addEventListener('hardwareBackPress', () => {
+			this.popPage();
+		});
+	}
 
-	// componentWillMount() {
-	// 	this.addBackEvent();
-	// }
+	removeBackEvent() {
+		BackAndroid.removeEventListener('hardwareBackPress', () => {
+			this.popPage();
+		});
+	}
 
-	// componentWillUnmount() {
-	// 	this.removeBackEvent();
-	// }
+	popPage() {
+		if (this.props.navigator && this.props.navigator.getCurrentRoutes().length > 1) {
+			if (this.props.route.data.callback)
+				this.props.route.data.callback(Page.CHAT_PAGE);
+			this.props.navigator.pop();
+			return true;
+		}
+		return false;
+	}
 
-	// addBackEvent() {
-	// 	BackAndroid.addEventListener('hardwareBackPress', () => {
-	// 		this.popPage();
-	// 	});
-	// }
+	shouldComponentUpdate(nextProps, nextState) {
+		if (nextProps !== this.props) {
+			const communications = convertToAirchatObject(nextProps.communications.slice()) || [];
+			setTimeout(() => this.setStateData(communications), 1000);
+		}
+		return nextState != this.state;
+	}
 
-	// removeBackEvent() {
-	// 	BackAndroid.removeEventListener('hardwareBackPress', () => {
-	// 		this.popPage();
-	// 	});
-	// }
+	componentDidMount() {
+		this.loadData();
+	}
 
-	// popPage() {
-	// 	if (this.props.navigator && this.props.navigator.getCurrentRoutes().length > 1) {
-	// 		if (this.props.route.data.callback) {
-	// 			let chat = this.props.chat;
-	// 			const messages = this.props.messages;
-	// 			chat = Object.assign({}, chat, {
-	// 				sub_title: messages.length > 0 ? messages[0].text : 'No new message',
-	// 				info: { ...chat.info, new_message_count: null }
-	// 			});
-	// 			DatabaseHelper.updateChatByQuery({ room: chat.info.room }, chat, (msg) => console.log(msg));
-	// 			this.props.route.data.callback(Page.CHAT_PAGE);
-	// 		}
-	// 		this.props.navigator.pop();
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
+	loadData() {
+		const url = format(GET_COMMUNICATION, this.state.appInfo.domain);
+		let data = {
+			doctype: this.props.route.data.doctype,
+			name: this.state.item.name,
+			limit_start: 0,
+			after: null
+		};
+		loadAsync(url, data)
+			.then((res) => {
+				if (res) {
+					Fluxify.doAction('updateCommunications', res);
+				} else {
+					this.setState({ progress: false });
+				}
+			}).catch((rej) => {
+				this.setState({ progress: false });
+			})
+	}
 
-	// componentDidMount() {
-	// 	let chat = this.state.chat;
-	// 	const is_group_chat = this.state.chat_type == Type.GROUP;
-	// 	if (is_group_chat) {
-	// 		const url = GET_USERS_IN_ROOM.format(this.state.appInfo.domain);
-	// 		const data = { room: chat.info.room };
-	// 		resolveRequest(url, data)
-	// 			.then((res) => {
-	// 				if (res && res.message && res.message.length > 0) {
-	// 					chat = Object.assign({}, chat, {
-	// 						info: {
-	// 							...chat.info,
-	// 							users: res.message.map((n) => {
-	// 								return {
-	// 									title: n.title,
-	// 									email: n.email,
-	// 								}
-	// 							})
-	// 						}
-	// 					});
-	// 					this.setState({ chat: chat });
-	// 				}
-	// 			}).catch((rej) => console.log(rej));
+	setStateData(__list) {
+		this.setState({
+			messages: __list,
+			progress: false
+		});
+	}
 
-	// 	} else if (this.state.chat.info.chat_type == Type.PERSONAL) {
-	// 		const url = SET_USERS_IN_ROOM.format(this.state.appInfo.domain);
-	// 		const data = { users: chat.info.users, room: chat.info.room };
-	// 		resolveRequest(url, data)
-	// 			.then((res) => {
-	// 				console.log(res);
-	// 			}).catch((rej) => console.log(rej));
-	// 	}
+	callback(from_page) {
+		//callback related logic
+	}
 
-	// 	DatabaseHelper.getAllChatItemForChatByChatRoom([chat.info.room], (results) => {
-	// 		const messages = results.map((result) => convertToAirChatMessageObject(result, this.state.chat_type == Type.GROUP));
-	// 		let chat = Object.assign({}, chat, {
-	// 			info: { ...chat.info, new_message_count: null }
-	// 		});
-	// 		Fluxify.doAction('updateCurrentChat', chat);
-	// 		Fluxify.doAction('updateCurrentChatMessages', messages);
-	// 	})
-	// }
+	onSend(messages = []) {
+		console.log(messages);
+	}
 
+	onRespond(message) {
+		console.log(message);
+	}
 
-	// storeChatItemInDatabase(airChatObject) {
+	renderSend(props) {
+		return (<Send {...props } />);
+	}
 
-	// 	// const chatItem = CollectionUtils.convertToChatItemFromAirChatMessageObject(airChatObject,
-	// 	// 	this.state.chat.info.room, this.state.chat.info.chat_type);
-	// 	// this.saveMessageOnSend(chatItem, this.state.chat);
-	// }
+	onRightElementPress(action) {
+		const index = action.index;
+		if (index == 0) {
+			this.props.navigator.push({
+				id: Page.INFO_PAGE.id, name: Page.INFO_PAGE.name,
+				data: {
+					item: this.state.item,
+					appInfo: this.state.appInfo,
+					callback: this.callback,
+				},
+			});
+		}
+	}
 
-	// saveMessageOnSend(item, chat) {
-	// 	// chat = Object.assign({}, chat, {
-	// 	// 	sub_title: item.message.text,
-	// 	// 	info: {
-	// 	// 		...chat.info,
-	// 	// 		is_added_to_chat_list: true,
-	// 	// 		last_message_time: item.message.created_on,
-	// 	// 		new_message_count: null,
-	// 	// 		last_active: CollectionUtils.getLastActive(item.message.created_on)
-	// 	// 	}
-	// 	// });
+	render() {
+		return (
+			<View style={style.container_with_flex_1}>
+				<Toolbar
+					leftElement="arrow-back"
+					onLeftElementPress={() => this.popPage()}
+					centerElement={this.state.item.name}
+					rightElement={{ menu: { labels: menuItems } }}
+					onRightElementPress={(action) => this.onRightElementPress(action)} />
 
-	// 	// Fluxify.doAction('updateCurrentChat', chat);
-	// 	// DatabaseHelper.updateChatByQuery({ room: chat.info.room }, chat, (msg) => {
-	// 	// 	console.log('chat page', msg);
-	// 	// 	DatabaseHelper.addNewChatItem([item], (msg) => {
-	// 	// 		console.log('chat page', msg);
-	// 	// 	})
-	// 	// });
-	// }
-
-	// onSend(messages = []) {
-	// 	const url = SEND_MESSAGE.format(this.state.appInfo.domain);
-	// 	const data = prepareBeforeSending(this.state.chat_type, this.state.chat_item_type, this.state.groupName, room, null, chatItem, 1);
-	// 	resolveRequest()
-	// 	// InternetHelper.checkIfNetworkAvailable((isConnected) => {
-	// 	// 	if (isConnected) {
-	// 	// 		this.storeChatItemInDatabase(messages[0], null);
-	// 	// 		this.updateFluxStateMessages(messages.concat(this.state.messages));
-	// 	// 		let chat_title = this.state.chat.info.chat_type == Type.PERSONAL ? this.state.owner.userName
-	// 	// 			: this.state.chat.title;
-	// 	// 		let obj = CollectionUtils.prepareBeforeSending(this.state.chat.info.chat_type,
-	// 	// 			chat_title, this.state.chat.info.room, messages[0], null, item_id,
-	// 	// 			this.state.chat.info.chat_type == Type.BOT ? 0 : 1);
-	// 	// 		InternetHelper.sendData(this.state.owner.domain, obj, this.state.owner.userId);
-	// 	// 	}
-	// 	// })
-	// }
-
-	// onRespond(message) {
-	// 	console.log(message);
-
-	// }
-
-	// renderSend(props) {
-	// 	return (<SendUI {...props } />);
-	// }
-
-	// onRightElementPress(action) {
-	// 	const index = action.index;
-	// 	if (index == 0) {
-	// 		this.props.navigator.push({
-	// 			id: this.state.chat_type == Type.GROUP ? Page.GROUP_INFO_PAGE.id : Page.CONTACT_INFO_PAGE.id,
-	// 			name: this.state.chat_type == Type.GROUP ? Page.GROUP_INFO_PAGE.name : Page.CONTACT_INFO_PAGE.name,
-	// 			data: {
-	// 				chat: this.state.chat,
-	// 				appInfo: this.state.appInfo,
-	// 				callback: this.callback
-	// 			}
-	// 		});
-	// 	} else if (index == 1) {
-	// 		AlertHelper.showAlert(null, 'Are you sure you want to delete all messages in this chat?',
-	// 			(data) => {
-	// 				if (data.ok) {
-	// 					DatabaseHelper.removeChatItemsByQuery({ chat_room: this.state.chat.info.room },
-	// 						(results) => {
-	// 							Fluxify.doAction('updateCurrentChatMessages', []);
-	// 							Toast.show('All Message deleted');
-	// 						});
-	// 				}
-	// 			});
-	// 	}
-	// }
-
-	// render() {
-	// 	return (
-	// 		<View style={style.view_with_flex_1_and_margin_all_sides}>
-	// 			<Toolbar
-	// 				leftElement="arrow-back"
-	// 				onLeftElementPress={() => this.popPage()}
-	// 				centerElement={this.state.chat.title}
-	// 				rightElement={{
-	// 					menu: { labels: menuItems },
-	// 				}}
-	// 				onRightElementPress={(action) => this.onRightElementPress()} />
-
-	// 			<AirChatUI
-	// 				messages={this.state.messages}
-	// 				onSend={this.onSend}
-	// 				user={{
-	// 					_id: this.state.appInfo.email,
-	// 					name: this.state.appInfo.user_name,
-	// 				}}
-	// 				communication={{
-	// 					from_name: null,
-	// 					from_email: null,
-	// 					to_emails: [],
-	// 					subject: null,
-	// 					status: null,
-	// 					attachments: [],
-	// 					is_comment: false
-	// 				}}
-	// 				isAlert={false}
-	// 				chatType={this.state.chat_type}
-	// 				isPersonalCommunicationChat={this.state.is_personal_communication_chat}
-	// 				keyboardDismissMode='interactive'
-	// 				enableEmptySections={true}
-	// 				renderSend={this.renderSend}
-	// 			/>
-	// 		</View>
-	// 	)
-	// }
+				<AirChatUI
+					messages={this.state.messages}
+					onSend={this.onSend}
+					user={{
+						_id: this.state.appInfo.email,
+						name: this.state.appInfo.user_name,
+					}}
+					keyboardDismissMode='interactive'
+					enableEmptySections={true}
+					renderSend={this.renderSend} />
+			</View>
+		)
+	}
 }
 
 ChatPage.propTypes = propTypes;

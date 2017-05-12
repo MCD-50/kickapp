@@ -25,10 +25,6 @@ import MessageUI from './MessageUI.js';
 import MessageContainerUI from './MessageContainerUI.js';
 import SendUI from './SendUI.js';
 import TimeUI from './TimeUI.js';
-import InteractiveChatUI from './InteractiveChatUI.js';
-import InteractiveListUI from './InteractiveListUI.js';
-import CommunicationEmailUI from './CommunicationEmailUI.js';
-import CommunicationCommentUI from './CommunicationCommentUI.js';
 import Communication from './Communication.js';
 
 // Min and max heights of ToolbarInput and Composer
@@ -96,18 +92,8 @@ const defaultProps = {
 		_id: null,
 		name: null
 	},
-	isAlert: false,
-	chatType: 'personal',
-	isPersonalCommunicationChat: false,
-	communication: {
-		from_name: null,
-		from_email: null,
-		to_emails: [],
-		subject: null,
-		status: null,
-		attachments: [],
-		is_comment: false,
-	},
+	attachments: [],
+	communication: null,
 	bottomOffset: 0,
 	isLoadingEarlier: false,
 };
@@ -139,9 +125,7 @@ const propTypes = {
 	renderSend: React.PropTypes.func,
 	renderTime: React.PropTypes.func,
 	user: React.PropTypes.object,
-	isAlert: React.PropTypes.bool,
-	chatType: React.PropTypes.string,
-	isPersonalCommunicationChat: React.PropTypes.bool,
+	attachments:React.PropTypes.array,
 	communication: React.PropTypes.object,
 	bottomOffset: React.PropTypes.number,
 	isLoadingEarlier: React.PropTypes.bool,
@@ -174,9 +158,6 @@ class AirChatUI extends React.Component {
 		this.onKeyboardDidHide = this.onKeyboardDidHide.bind(this);
 		this.onType = this.onType.bind(this);
 		this.onSend = this.onSend.bind(this);
-		this.onViewInfo = this.onViewInfo.bind(this);
-		this.onViewMore = this.onViewMore.bind(this);
-		this.onItemClicked = this.onItemClicked.bind(this);
 		this.onRespond = this.onRespond.bind(this);
 		this.getLocale = this.getLocale.bind(this);
 
@@ -382,9 +363,6 @@ class AirChatUI extends React.Component {
 		const AnimatedView = this.props.isAnimated === true ? Animated.View : View;
 		const props = {
 			...this.props,
-			onViewInfo: this.onViewInfo,
-			onViewMore: this.onViewMore,
-			onItemClicked: this.onItemClicked,
 			onRespond: this.onRespond,
 		}
 
@@ -416,9 +394,7 @@ class AirChatUI extends React.Component {
 				...message,
 				user: this.props.user,
 				communication: this.props.communication,
-				isAlert: this.props.isAlert,
-				chatType: this.props.chatType,
-				isPersonalCommunicationChat: this.props.isPersonalCommunicationChat,
+				attachments: this.props.attachments,
 				createdAt: new Date(),
 				_id: Math.round(Math.random() * 1000000),
 			};
@@ -439,18 +415,6 @@ class AirChatUI extends React.Component {
 				}
 			}, 50);
 		}
-	}
-
-	onViewInfo(message) {
-		this.props.onViewInfo(message);
-	}
-
-	onViewMore(message) {
-		this.props.onViewMore(message);
-	}
-
-	onItemClicked(message, index) {
-		this.props.onItemClicked(message, index);
 	}
 
 	onRespond(message) {
@@ -604,10 +568,6 @@ export {
 	BubbleUI,
 	MessageImageUI,
 	MessageTextUI,
-	InteractiveChatUI,
-	InteractiveListUI,
-	CommunicationCommentUI,
-	CommunicationEmailUI,
 	ComposerUI,
 	DayUI,
 	InputToolbarUI,

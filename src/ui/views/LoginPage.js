@@ -118,7 +118,7 @@ class LoginPage extends Component {
 				setData(SERVER_URL, url);
 				setData(IS_LOGGED, "true");
 				this.setState({progress : false});
-				this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
+				this.props.navigator.replace({ id: Page.ISSUE_LIST.id, name: Page.ISSUE_LIST.name});
 			})
 		}, (rej) => {
 			this.setState({progress : false});

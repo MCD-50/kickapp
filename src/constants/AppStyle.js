@@ -72,6 +72,14 @@ export const style = StyleSheet.create({
 		color: 'black',
 		fontSize: 17,
 	},
+	text_with_black_color_and_font_size_15: {
+		color: 'black',
+		fontSize: 15,
+	},
+	text_with_black_color_and_font_size_13: {
+		color: 'black',
+		fontSize: 13,
+	},
 	text_with_gray_color_and_font_size_14: {
 		color: '#b2b2b2',
 		fontSize: 17,
@@ -168,6 +176,12 @@ export const style = StyleSheet.create({
 		marginRight: 10,
 		justifyContent: 'center',
 		alignItems: 'center',
+	},
+	translucent_toolbar_view: {
+		flex: 1, 
+		marginLeft: 15,
+		alignItems: 'flex-start', 
+		justifyContent: 'center'
 	}
 });
 

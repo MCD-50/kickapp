@@ -166,11 +166,10 @@ class MessageTextUI extends React.Component {
 	}
 
 	getHeader(props) {
-		if (props.currentMessage.isGroupChat && props.position.toString() == 'left') {
+		if (props.position.toString() == 'left') {
 			return (
 				<Text style={[styles[props.position].header, props.headerStyle[props.position], {
-					color: this.getHeaderColor(props.currentMessage.user.name)
-				}]}>
+					color: this.getHeaderColor(props.currentMessage.user.name)}]}>
 					{this.capitalize(props.currentMessage.user.name)}
 				</Text>
 			);

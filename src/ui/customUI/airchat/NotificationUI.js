@@ -87,14 +87,6 @@ class NotificationUI extends React.Component {
             return null;
         }
     }
-
-    // return (<View style={[styles.container]}>
-    //     <View style={[styles.wrapper]}>
-    //         <Text style={[styles.text]}>
-    //             {this.capitalizeAndStrip(this.props.currentMessage.text)}
-    //         </Text>
-    //     </View>
-    // </View>)
 }
 
 NotificationUI.propTypes = propTypes;

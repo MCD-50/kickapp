@@ -36,17 +36,7 @@ class Send extends Component {
 					</View>
 				</TouchableOpacity>);
 		}
-		return (
-			<TouchableOpacity
-				style={[style.send_ui_container, this.props.containerStyle]}
-				onPress={() => {
-
-				}}
-				accessibilityTraits="button">
-				<View style={style.send_ui_icon}>
-					<Icon name='launch' color='#0086ff' size={23} />
-				</View>
-			</TouchableOpacity>);
+		return null;
 	}
 }
 

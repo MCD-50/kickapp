@@ -30,9 +30,7 @@ class SplashPage extends Component {
 			progress: true,
 			error: false,
 		}
-
 		this.navigate = this.navigate.bind(this);
-		//this.resolveServerUrl = this.resolveServerUrl.bind(this);
 		this.renderFooter = this.renderFooter.bind(this);
 	}
 
@@ -65,10 +63,8 @@ class SplashPage extends Component {
 				if (res) {
 					login(res)
 					.then((x)=>{
-						//login successfull now fetch the server url
-						//this.resolveServerUrl(res);
 						this.setState({progress : false});
-						this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
+						this.props.navigator.replace({ id: Page.ISSUE_LIST.id, name: Page.ISSUE_LIST.name});
 					}).catch((rej) => {
 						this.setState({ progress: false, error: true });
 					});
@@ -80,29 +76,7 @@ class SplashPage extends Component {
 		}
 	}
 
-	// resolveServerUrl(full_url) {
-	// 	const index = full_url.lastIndexOf('api');
-	// 	const ping_url = full_url.substring(0, index) + 'api/method/frappe.utils.kick.get_dev_port';
-	// 	fetch(ping_url)
-	// 	.then((res) => res.json(), (rej)=> AlertHelper.showAlert("Network request failed.",'Something went wrong. Please try in a little bit.'))
-	// 	.then((json) => {
-	// 		getData(APP_INFO)
-	// 		.then((dom)=>{
-	// 			dom = JSON.parse(dom).domain;
-	// 			const domain = dom.split(':');
-	// 			let url = 'http://' + domain[0];
-	// 			if (json.message[0] == 1) {
-	// 				url = url + ':' + json.message[1];
-	// 			}
-	// 			setData(SERVER_URL, url);
-	// 			this.setState({progress : false});
-	// 			this.props.navigator.replace({ id: Page.LIST_PAGE.id, name: Page.LIST_PAGE.name});
-	// 		})
-	// 	}, (rej) => {
-	// 		this.setState({progress : false});
-	// 		AlertHelper.showAlert("Unable to convert to JSON.",'Something went wrong. Please try in a little bit.')
-	// 	});
-	// }
+	
 
 	renderFooter() {
 		if (this.state.progress) {

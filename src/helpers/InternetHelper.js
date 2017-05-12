@@ -46,7 +46,7 @@ export const resolveRequest = (url, data = null) => {
 	}
 
 	const method = getMethod(form);
-
+	
 	return fetchUrl(url, method)
 		.then((res) => {
 			return Promise.resolve(res);

@@ -7,15 +7,15 @@ var format = require('string-format')
 import { Toolbar, Avatar, Progress, ListItem, Badge, Toast } from 'react-native-material-component';
 import { Page } from '../../enums/Page.js';
 import { resolveRequest } from '../../helpers/InternetHelper.js';
-import { APP_INFO, GET_ISSUES, GET_OPPORTUNITY } from '../../constants/AppConstant.js';
+import { APP_INFO, GET_ISSUES } from '../../constants/AppConstant.js';
 import { style } from '../../constants/AppStyle.js';
 import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
 import { getData, setData } from '../../helpers/AsyncStore.js';
-import { getTextColor, getTitle, getAvatarText, getSubtitle } from '../../helpers/CollectionHelper.js';
+import { getTextColor, getTitle, getAvatarText, getSubtitle, loadAsync } from '../../helpers/CollectionHelper.js';
+import Empty from '../components/Empty.js';
 import AlertHelper from '../../helpers/AlertHelper.js';
 import SocketHelper from '../../helpers/SocketHelper.js';
 import Fluxify from 'fluxify';
-
 
 //socket-io fix
 window.navigator.userAgent = "react-native"
@@ -32,19 +32,14 @@ const menuItems = ['Opportunity', 'Settings'];
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1.id !== r2.id });
 
-class ListPage extends Component {
+class IssueList extends Component {
 	constructor(params) {
 		super(params);
 		this.socket = {};
 		this.state = {
-			searchText: '',
-			isLoading: true,
-			chatList: [],
+			progress: true,
 			dataSource: ds.cloneWithRows([]),
-			title: 'Updating...',
 			appInfo: null,
-			roomJoined: false,
-
 		};
 
 		this.onSocketConnectCallback = this.onSocketConnectCallback.bind(this);
@@ -61,59 +56,62 @@ class ListPage extends Component {
 
 	componentWillMount() {
 		getData(APP_INFO)
-			.then((res) => {
-				const obj = Object.assign({}, JSON.parse(res));
-				this.setState({ appInfo: obj });
-			});
+		.then((res) => {
+			const obj = Object.assign({}, JSON.parse(res));
+			this.setState({ appInfo: obj });
+		});
+	}
+
+	shouldComponentUpdate(nextProps, nextState) {
+		const chatList = nextProps.chatList.filter((x) => x.naming_series.includes('ISS')).slice() || []
+		if (nextProps !== this.props) {
+			setTimeout(() => this.setStateData(chatList), 1000);
+		}
+		return nextState != this.state;
 	}
 
 	componentDidMount() {
-		this.socket = SocketHelper(this.onReceive,
-			this.onSocketConnectCallback,
-			this.onRoomJoinedCallback);
+		this.socket = SocketHelper(this.onReceive, this.onSocketConnectCallback, this.onRoomJoinedCallback);
+		setTimeout(() => this.setState({ progress: false }), 10000);
 	}
 
 	onSocketConnectCallback() {
-		this.setState({ isLoading: false });
 		getData(APP_INFO)
-			.then((res) => {
-				res = JSON.parse(res);
-				this.socket.joinRoom(res.email.toLowerCase().trim())
-			});
+		.then((res) => {
+			res = JSON.parse(res);
+			this.socket.joinRoom("kickapp@list_update:all")
+		});
 	}
 
 	onRoomJoinedCallback() {
-		this.setStateData({ roomJoined: true });
 		this.loadData();
 	}
 
 	onReceive(message) {
-		//notify on new issue or opportunity
+		//check doctype and then update props of them accordingly.
 		console.log(message);
 	}
 
 	setStateData(__list) {
 		this.setState({
-			chatList: __list,
 			dataSource: ds.cloneWithRows(__list),
-			isLoading: false
+			progress: false
 		});
 	}
 
 	loadData() {
 		const url = format(GET_ISSUES, this.state.appInfo.domain);
 		const data = { "email": this.state.appInfo.email }
-		resolveRequest(url, data)
+		loadAsync(url, data)
 			.then((res) => {
-				if (res && res.message && res.message.length > 0) {
-					this.setState({ title: "Kick" });
-					this.setStateData(res.message);
+				if (res) {
+					const chatList = this.props.chatList.filter((x) => x.naming_series.includes('OPTY')).slice() || []
+					Fluxify.doAction('updateChatList', chatList.concat(res));
 				} else {
-					this.setState({ isLoading: false, title: "Kick" });
+					this.setState({ progress: false });
 				}
 			}).catch((rej) => {
-				console.log(rej);
-				this.setState({ isLoading: false, title: "Kick" });
+				this.setState({ progress: false });
 			})
 	}
 
@@ -140,6 +138,7 @@ class ListPage extends Component {
 							id: page.id, name: page.name,
 							data: {
 								item: item,
+								doctype: 'Issue',
 								callback: this.callback,
 								appInfo: this.state.appInfo
 							}
@@ -153,11 +152,15 @@ class ListPage extends Component {
 	onRightElementPress(action) {
 		const index = action.index;
 		if (index == 0) {
-			this.setState({ isOpportunity: false });
-		} else if (index == 1) {
-			this.setState({ isOpportunity: true });
+			this.props.navigator.push({
+				id: Page.OPPORTUNITY_LIST.id, name: Page.OPPORTUNITY_LIST.name,
+				data: {
+					appInfo: this.state.appInfo,
+					callback: this.callback,
+				},
+			});
 		}
-		else if (index == 2) {
+		else if (index == 1) {
 			this.props.navigator.push({
 				id: Page.SETTINGS_PAGE.id, name: Page.SETTINGS_PAGE.name,
 				data: {
@@ -169,29 +172,36 @@ class ListPage extends Component {
 	}
 
 	renderElement() {
-		if (this.state.isLoading) {
+		if (this.state.progress) {
 			return (
-				<View style={style.progress_ring_centered_view}>
+				<View style={[style.align_center_justify_center, style.container_with_flex_1]}>
 					<Progress />
 				</View>)
+		} else if (!this.state.progress && this.state.dataSource._cachedRowCount > 0) {
+			return (
+				<ListView
+					dataSource={this.state.dataSource}
+					keyboardShouldPersistTaps='always'
+					keyboardDismissMode='interactive'
+					enableEmptySections={true}
+					ref={'LISTVIEW'}
+					renderRow={(item) => this.renderListItem(item)}
+				/>
+			);
+		} else {
+			return (
+				<View style={[style.container_with_flex_1, style.align_center_justify_center]}>
+					<Empty message={"It's empty in here, try again in little bit."} />
+				</View>
+			)
 		}
-		return (
-			<ListView
-				dataSource={this.state.dataSource}
-				keyboardShouldPersistTaps='always'
-				keyboardDismissMode='interactive'
-				enableEmptySections={true}
-				ref={'LISTVIEW'}
-				renderRow={(item) => this.renderListItem(item)}
-			/>
-		);
 	}
 
 	render() {
 		return (
 			<View style={style.container_with_flex_1}>
 				<Toolbar
-					centerElement={this.state.title}
+					centerElement={this.props.route.name}
 					rightElement={{ menu: { labels: menuItems } }}
 					onRightElementPress={(action) => this.onRightElementPress(action)} />
 				{this.renderElement()}
@@ -200,5 +210,5 @@ class ListPage extends Component {
 	}
 }
 
-ListPage.propTypes = propTypes;
-export default ListPage;
+IssueList.propTypes = propTypes;
+export default IssueList;

@@ -6,6 +6,8 @@ import { View, Text, ScrollView, BackAndroid } from 'react-native';
 import { Toolbar, Card } from 'react-native-material-component';
 import { Page } from '../../enums/Page.js';
 import { style } from '../../constants/AppStyle.js';
+import { IS_LOGGED} from '../../constants/AppConstant.js';
+import { setData } from '../../helpers/AsyncStore.js';
 
 const propTypes = {
 	navigator: PropTypes.object.isRequired,
@@ -15,6 +17,7 @@ const propTypes = {
 	currentChat: PropTypes.object.isRequired
 };
 
+const menuItems = ['Logout'];
 
 class SettingPage extends Component {
 	constructor(params) {
@@ -26,8 +29,8 @@ class SettingPage extends Component {
 		this.addBackEvent = this.addBackEvent.bind(this);
 		this.removeBackEvent = this.removeBackEvent.bind(this);
 		this.popPage = this.popPage.bind(this);
+		this.onRightElementPress = this.onRightElementPress.bind(this);
 		this.renderElement = this.renderElement.bind(this);
-
 	}
 
 	componentWillMount() {
@@ -41,13 +44,13 @@ class SettingPage extends Component {
 
 	addBackEvent() {
 		BackAndroid.addEventListener('hardwareBackPress', () => {
-			this.popPage();
+			return this.popPage();
 		});
 	}
 
 	removeBackEvent() {
 		BackAndroid.removeEventListener('hardwareBackPress', () => {
-			this.popPage();
+			return this.popPage();
 		});
 	}
 
@@ -61,14 +64,21 @@ class SettingPage extends Component {
 		return false;
 	}
 
+	onRightElementPress(action) {
+		const index = action.index;
+		if (index == 0) {
+			setData(IS_LOGGED, "false");
+			this.props.navigator.resetTo({ id: Page.LOGIN_PAGE.id, name: Page.LOGIN_PAGE.name})
+		}
+	}
+
 	renderElement() {
 		return (
 			<ScrollView style={style.container_with_flex_1} keyboardDismissMode='interactive'>
 				<Card fullWidth='0'>
 					<View style={style.view_with_flex_1_and_margin_all_sides}>
-						<Text style={style.text_with_black_color_and_font_size_17}>Kick beta</Text>
-						<Text style={style.text_with_gray_color_and_font_size_14}>0.0.1</Text>
-						<Text style={style.text_with_gray_color_and_font_size_14}>Simple app by frappe inc. Making the erpnext product more simple to use.</Text>
+						<Text style={style.text_with_black_color_and_font_size_15}>Kick</Text>
+						<Text style={style.text_with_black_color_and_font_size_13}>1.0.0</Text>
 					</View>
 				</Card>
 			</ScrollView>
@@ -82,7 +92,8 @@ class SettingPage extends Component {
 					leftElement="arrow-back"
 					centerElement={this.props.route.name}
 					onLeftElementPress={() => this.popPage()}
-				/>
+					rightElement={{ menu: { labels: menuItems } }}
+					onRightElementPress={(action) => this.onRightElementPress(action)} />
 				{this.renderElement()}
 			</View>
 		)
@@ -91,3 +102,6 @@ class SettingPage extends Component {
 
 SettingPage.propTypes = propTypes;
 export default SettingPage;
+
+
+

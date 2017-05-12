@@ -14,9 +14,11 @@ import StateHelper from './src/helpers/StateHelper.js';
 //pages 
 import SplashPage from './src/ui/views/SplashPage.js';
 import LoginPage from './src/ui/views/LoginPage.js';
-import ListPage from './src/ui/views/ListPage.js';
+import IssueList from './src/ui/views/IssueList.js';
+import OpportunityList from './src/ui/views/OpportunityList.js';
 import ChatPage from './src/ui/views/ChatPage.js';
 import SettingsPage from './src/ui/views/SettingsPage.js';
+import InfoPage from './src/ui/views/InfoPage.js';
 
 
 class Kick extends Component {
@@ -44,11 +46,11 @@ class Kick extends Component {
 	}
 
 	onChatListChanged(list) {
-		this.setState({ chatList: list.splice() });
+		this.setState({ chatList: list.slice() });
 	}
 
 	onCommunicationsChanged(list) {
-		this.setState({ communications: list.splice() });
+		this.setState({ communications: list.slice() });
 	}
 
 	onCurrentChatChanged(chat) {
@@ -63,11 +65,15 @@ class Kick extends Component {
 		else if (id == 2)
 			return <LoginPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
 		else if (id == 3)
-			return <ListPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
+			return <IssueList navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
 		else if (id == 4)
-			return <ChatPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
+			return <OpportunityList navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
 		else if (id == 5)
+			return <ChatPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
+		else if (id == 6)
 			return <SettingsPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
+		else if (id == 7)
+			return <InfoPage navigator={navigator} route={route} chatList={this.state.chatList} communications={this.state.communications} currentChat={this.state.currentChat} />
 	}
 
 	render() {

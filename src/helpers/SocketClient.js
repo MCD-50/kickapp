@@ -79,7 +79,6 @@ class SocketClient {
 	}
 
 	onListUpdate(msg) {
-		console.log(msg);
 		let callbacks = this.stateChangeCallbacks.message;
 		callbacks.forEach(callback => callback(msg));
 	}
