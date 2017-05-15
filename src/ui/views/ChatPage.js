@@ -10,12 +10,11 @@ import { Page } from '../../enums/Page.js';
 import { APP_INFO, GET_COMMUNICATION, SEND_MESSAGE } from '../../constants/AppConstant.js';
 import { style } from '../../constants/AppStyle.js';
 import { STATUS_BAR_COLOR } from '../../constants/AppColor.js'
-import { loadAsync, convertToAirchatObject } from '../../helpers/CollectionHelper.js';
+import { loadAsync, convertToAirchatObject, createIssueChatAlert } from '../../helpers/CollectionHelper.js';
 import { AirChatUI } from '../customUI/airchat/AirChatUI.js';
 import AlertHelper from '../../helpers/AlertHelper.js';
 import Send from '../components/Send.js';
 import Fluxify from 'fluxify';
-
 
 const propTypes = {
 	navigator: PropTypes.object.isRequired,
@@ -86,7 +85,12 @@ class ChatPage extends Component {
 	shouldComponentUpdate(nextProps, nextState) {
 		if (nextProps !== this.props) {
 			const communications = convertToAirchatObject(nextProps.communications.slice()) || [];
-			setTimeout(() => this.setStateData(communications), 1000);
+			const with_alert = communications.concat(createIssueChatAlert(this.state.item));
+			if (this.props.route.data.doctype == "Issue") {
+				setTimeout(() => this.setStateData(with_alert), 1000);
+			} else {
+				setTimeout(() => this.setStateData(communications), 1000);
+			}
 		}
 		return nextState != this.state;
 	}
@@ -112,14 +116,11 @@ class ChatPage extends Component {
 				}
 			}).catch((rej) => {
 				this.setState({ progress: false });
-			})
+		});
 	}
 
 	setStateData(__list) {
-		this.setState({
-			messages: __list,
-			progress: false
-		});
+		this.setState({ messages: __list, progress: false });
 	}
 
 	callback(from_page) {
@@ -158,7 +159,11 @@ class ChatPage extends Component {
 				<Toolbar
 					leftElement="arrow-back"
 					onLeftElementPress={() => this.popPage()}
-					centerElement={this.state.item.name}
+					centerElement={{
+						upperText: this.props.route.data.doctype == "Issue" ? this.state.item.raised_by :
+							(this.state.item.contact_display ? this.state.item.contact_display : this.state.item.contact_email || this.state.item.name),
+						lowerText: this.state.item.name
+					}}
 					rightElement={{ menu: { labels: menuItems } }}
 					onRightElementPress={(action) => this.onRightElementPress(action)} />
 

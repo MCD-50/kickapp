@@ -94,6 +94,7 @@ const defaultProps = {
 	},
 	attachments: [],
 	communication: null,
+	alert:false,
 	bottomOffset: 0,
 	isLoadingEarlier: false,
 };
@@ -127,6 +128,7 @@ const propTypes = {
 	user: React.PropTypes.object,
 	attachments:React.PropTypes.array,
 	communication: React.PropTypes.object,
+	alert:React.PropTypes.bool,
 	bottomOffset: React.PropTypes.number,
 	isLoadingEarlier: React.PropTypes.bool,
 	keyboardShouldPersistTaps: React.PropTypes.oneOf(['always', 'never', 'handled']),
@@ -395,6 +397,7 @@ class AirChatUI extends React.Component {
 				user: this.props.user,
 				communication: this.props.communication,
 				attachments: this.props.attachments,
+				alert:this.props.alert,
 				createdAt: new Date(),
 				_id: Math.round(Math.random() * 1000000),
 			};

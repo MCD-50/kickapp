@@ -104,8 +104,8 @@ class OpportunityList extends Component {
 		loadAsync(url, data)
 			.then((res) => {
 				if (res) {
+					console.log(res);
 					const chatList = this.props.chatList.filter((x) => x.naming_series.includes('ISS')).slice() || []
-					console.log(chatList);
 					Fluxify.doAction('updateChatList', chatList.concat(res));
 				} else {
 					this.setState({ progress: false });

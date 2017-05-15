@@ -56,10 +56,10 @@ class IssueList extends Component {
 
 	componentWillMount() {
 		getData(APP_INFO)
-		.then((res) => {
-			const obj = Object.assign({}, JSON.parse(res));
-			this.setState({ appInfo: obj });
-		});
+			.then((res) => {
+				const obj = Object.assign({}, JSON.parse(res));
+				this.setState({ appInfo: obj });
+			});
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -77,10 +77,10 @@ class IssueList extends Component {
 
 	onSocketConnectCallback() {
 		getData(APP_INFO)
-		.then((res) => {
-			res = JSON.parse(res);
-			this.socket.joinRoom("kickapp@list_update:all")
-		});
+			.then((res) => {
+				res = JSON.parse(res);
+				this.socket.joinRoom("kickapp@list_update:all")
+			});
 	}
 
 	onRoomJoinedCallback() {
@@ -140,7 +140,7 @@ class IssueList extends Component {
 								item: item,
 								doctype: 'Issue',
 								callback: this.callback,
-								appInfo: this.state.appInfo
+								appInfo: this.state.appInfo,
 							}
 						})
 					}} />

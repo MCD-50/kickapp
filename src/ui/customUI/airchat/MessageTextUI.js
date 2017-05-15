@@ -11,23 +11,27 @@ import Communications from './Communication.js';
 
 const textStyle = {
 	fontSize: 15,
-	marginTop: 3,
-	marginLeft: 10,
-	marginRight: 10,
 };
 
 const headerStyle = {
 	fontSize: 14,
+	fontWeight: '400',
+};
+
+const viewStyle = {
 	marginTop: 3,
 	marginLeft: 10,
 	marginRight: 10,
-	fontWeight: '400',
-};
+}
 
 
 const styles = {
 	left: StyleSheet.create({
 		container: {
+			...viewStyle
+		},
+		view: {
+			...viewStyle
 		},
 		header: {
 			color: 'black',
@@ -37,7 +41,6 @@ const styles = {
 			color: 'black',
 			...textStyle,
 		},
-
 		link: {
 			color: 'black',
 			textDecorationLine: 'underline',
@@ -46,6 +49,10 @@ const styles = {
 
 	right: StyleSheet.create({
 		container: {
+			...viewStyle
+		},
+		view: {
+			...viewStyle
 		},
 		header: {
 			color: 'black',
@@ -75,6 +82,7 @@ const defaultProps = {
 	},
 	containerStyle: {},
 	textStyle: {},
+	viewStyle: {},
 	headerStyle: {},
 	linkStyle: {},
 };
@@ -89,6 +97,10 @@ const propTypes = {
 	textStyle: React.PropTypes.shape({
 		left: Text.propTypes.style,
 		right: Text.propTypes.style,
+	}),
+	viewStyle: React.PropTypes.shape({
+		left: View.propTypes.style,
+		right: View.propTypes.style,
 	}),
 	headerStyle: React.PropTypes.shape({
 		left: Text.propTypes.style,
@@ -168,17 +180,18 @@ class MessageTextUI extends React.Component {
 	getHeader(props) {
 		if (props.position.toString() == 'left') {
 			return (
-				<Text style={[styles[props.position].header, props.headerStyle[props.position], {
-					color: this.getHeaderColor(props.currentMessage.user.name)}]}>
-					{this.capitalize(props.currentMessage.user.name)}
-				</Text>
+				<View>
+					<Text style={[styles[props.position].header, props.headerStyle[props.position], { color: this.getHeaderColor(props.currentMessage.user.name) }]}>
+						{this.capitalize(props.currentMessage.user.name)}
+					</Text>
+					<Text style={{ marginTop: 5, fontSize: 12 }}>Subject - {props.currentMessage.communication.subject}</Text>
+				</View>
 			);
 		}
 		return null;
 	}
 
 	render() {
-
 		return (
 			<View style={[styles[this.props.position].container, this.props.containerStyle[this.props.position]]}>
 				{
@@ -192,9 +205,7 @@ class MessageTextUI extends React.Component {
 						{ type: 'phone', style: StyleSheet.flatten([styles[this.props.position].link, this.props.linkStyle[this.props.position]]), onPress: this.onPhonePress },
 						{ type: 'email', style: StyleSheet.flatten([styles[this.props.position].link, this.props.linkStyle[this.props.position]]), onPress: this.onEmailPress },
 					]}>
-
 					{this.props.currentMessage.text}
-
 				</ParsedText>
 
 			</View>

@@ -80,21 +80,21 @@ class MessageUI extends React.Component {
 	}
 
 	renderNotification() {
-		if (this.props.currentMessage.communication && this.props.currentMessage.communication.communication_type == "Comment") {
-			<NoticationUI currentMessage={this.props.currentMessage} />;
+		if ((this.props.currentMessage.communication && this.props.currentMessage.communication.communication_type == "Comment") || this.props.currentMessage.alert) {
+			return <NoticationUI currentMessage={this.props.currentMessage} />;
 		}
 		return null;
 	}
 
 	renderBubble() {
-		if (this.props.currentMessage.communication && this.props.currentMessage.communication.communication_type == "Comment") {
+		if (this.props.currentMessage.alert ||
+			(this.props.currentMessage.communication && this.props.currentMessage.communication.communication_type == "Comment")) {
 			return null;
 		} else {
 			const { containerStyle, ...bubbleProps } = this.props;
 			if (this.props.renderBubble) {
 				return this.props.renderBubble({
 					...bubbleProps,
-					//TODO: remove in next major release
 					isSameUser: warnDeprecated(isSameUser),
 					isSameDay: warnDeprecated(isSameDay)
 				});

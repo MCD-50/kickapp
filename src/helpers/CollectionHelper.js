@@ -70,3 +70,19 @@ export const convertToAirchatObject = (communications) => {
 		});
 }
 
+
+export const createIssueChatAlert = (item) => {
+	return [{
+		_id: Math.round(Math.random() * 1000000),
+		text: item.subject.trim() ? item.subject.trim() : item.description.trim() || "No information provide",
+		createdAt: item.creation.split('.')[0],
+		user: {
+			_id: item.raised_by,
+			name: item.raised_by,
+		},
+		alert: true,
+		communication: null,
+		attachments: []
+	}]
+}
+
